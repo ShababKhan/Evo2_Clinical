@@ -14,6 +14,7 @@ pysam
 cyvcf2
 pybedtools
 scikit-allel
+genomepy
 
 # Testing
 pytest
@@ -29,6 +30,9 @@ scikit-learn
 # Interactive visualization
 jupyter
 ipywidgets
+streamlit
+pygwalker
+plotly
 
 # Development tools
 black

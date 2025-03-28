@@ -2,10 +2,9 @@
 """
 Variant Analysis Module for Evo2 Pipeline
 
-This module provides utilities for analyzing genomic variants in the context of
-endothelial cell research, particularly focusing on:
+This module provides utilities for analyzing genomic variants, including:
 - Processing VCF files from 1000 Genomes and custom sources
-- Analyzing variants in endothelial-specific genes
+- Analyzing variants in any gene or genomic region
 - Scoring variant effects using various computational methods
 - Integrating ENCODE data for cell-type specific analysis
 
@@ -35,24 +34,12 @@ class VariantProcessor:
     """Class for processing and analyzing genomic variants."""
     
     def __init__(self, reference_genome: str = "GRCh38"):
-        """Initialize the variant processor.
-        
-        Args:
-            reference_genome: Reference genome build (default: GRCh38)
-        """
         self.reference_genome = reference_genome
-        self.variant_cache = {}
+        self.gene_annotations = {}  # Will be populated with gene coordinates
         logger.info(f"Initialized VariantProcessor with {reference_genome}")
-        
+
     def load_vcf(self, vcf_path: str) -> pd.DataFrame:
-        """Load and parse a VCF file into a pandas DataFrame.
-        
-        Args:
-            vcf_path: Path to the VCF file
-            
-        Returns:
-            DataFrame containing variant information
-        """
+        """Load and parse VCF file into a DataFrame."""
         vcf = cyvcf2.VCF(vcf_path)
         variants = []
         
@@ -79,13 +66,14 @@ class VariantProcessor:
             pos: Position of the variant
             
         Returns:
-            Gene name as a string (placeholder implementation)
+            Gene name as string
         """
-        # Placeholder logic: Replace with actual gene annotation logic
-        if chrom == "chr3" and 128198000 <= pos <= 128208000:
-            return "GATA2-AS1"
+        for gene, coords in self.gene_annotations.items():
+            if (chrom == coords['chrom'] and 
+                coords['start'] <= pos <= coords['end']):
+                return gene
         return "Unknown"
-    
+
     def annotate_variants(self, variants_df: pd.DataFrame, 
                          encode_data: Optional[pd.DataFrame] = None) -> pd.DataFrame:
         """Annotate variants with functional information and ENCODE data.
@@ -110,7 +98,7 @@ class VariantProcessor:
             )
             
         return annotated_df
-    
+
     def score_variant_impact(self, variant_info: Dict) -> float:
         """Score the potential functional impact of a variant.
         
@@ -120,15 +108,9 @@ class VariantProcessor:
         Returns:
             Impact score between 0 and 1
         """
-        # Example scoring logic based on variant type and gene
         impact_score = 0.0
 
-        # Assign higher scores to variants in critical genes
-        critical_genes = {"GATA2", "EPAS1", "KDR"}
-        if variant_info.get("gene") in critical_genes:
-            impact_score += 0.5
-
-        # Adjust score based on variant type
+        # Score based on variant type
         variant_type = variant_info.get("variant_type", "").upper()
         if variant_type == "SNP":
             impact_score += 0.2
@@ -137,133 +119,72 @@ class VariantProcessor:
         elif variant_type == "SV":
             impact_score += 0.4
 
+        # Add scores based on genomic context
+        if variant_info.get("in_exon"):
+            impact_score += 0.3
+        elif variant_info.get("in_promoter"):
+            impact_score += 0.2
+        elif variant_info.get("in_enhancer"):
+            impact_score += 0.15
+
         # Normalize score to be between 0 and 1
         return min(impact_score, 1.0)
 
-    def analyze_endothelial_variants(self, variants_df: pd.DataFrame,
-                                   endothelial_genes: List[str]) -> pd.DataFrame:
-        """Analyze variants specific to endothelial-related genes.
+    def analyze_gene_variants(self, variants_df: pd.DataFrame,
+                            gene_id: str,
+                            region_info: Optional[Dict] = None) -> pd.DataFrame:
+        """Analyze variants in a specific gene or genomic region.
         
         Args:
             variants_df: DataFrame of variants
-            endothelial_genes: List of endothelial-specific genes
+            gene_id: ID of the gene to analyze
+            region_info: Optional dictionary with region coordinates
             
         Returns:
-            DataFrame with endothelial-specific analysis
+            DataFrame with variant analysis
         """
-        # Filter for variants in endothelial genes
-        endothelial_variants = variants_df[
-            variants_df['gene'].isin(endothelial_genes)
-        ].copy()
+        # Filter for gene variants
+        if region_info:
+            gene_variants = variants_df[
+                (variants_df['chrom'] == region_info['chrom']) &
+                (variants_df['pos'] >= region_info['start']) &
+                (variants_df['pos'] <= region_info['end'])
+            ].copy()
+        else:
+            gene_variants = variants_df[
+                variants_df['gene'] == gene_id
+            ].copy()
 
-        # Add a column indicating endothelial-specific variants
-        endothelial_variants["is_endothelial"] = True
+        # Add analysis columns
+        gene_variants["analyzed_gene"] = gene_id
+        gene_variants["impact_score"] = gene_variants.apply(
+            lambda row: self.score_variant_impact(row.to_dict()),
+            axis=1
+        )
 
-        return endothelial_variants
+        return gene_variants
 
-    def analyze_lncrna_variants(self, variants_df: pd.DataFrame,
-                              lncrna_id: str = "GATA2-AS1") -> pd.DataFrame:
-        """Analyze variants in long non-coding RNAs, especially GATA2-AS1.
-        
-        Args:
-            variants_df: DataFrame of variants
-            lncrna_id: ID of the lncRNA to analyze
-            
-        Returns:
-            DataFrame with lncRNA variant analysis
-        """
-        # Filter for lncRNA variants
-        lncrna_variants = variants_df[
-            variants_df['gene'] == lncrna_id
-        ].copy()
-
-        # Add a column for lncRNA-specific analysis
-        lncrna_variants["lncrna_analysis"] = "Analyzed"
-
-        return lncrna_variants
-    
     def analyze_gwas_variants(self, variants_df: pd.DataFrame,
                             gwas_catalog: pd.DataFrame) -> pd.DataFrame:
-        """Analyze variants in the context of GWAS catalog data.
+        """Analyze variants based on GWAS catalog data.
         
         Args:
             variants_df: DataFrame of variants
-            gwas_catalog: DataFrame of GWAS catalog entries
+            gwas_catalog: DataFrame with GWAS annotations
             
         Returns:
-            DataFrame with GWAS-based analysis
+            DataFrame with GWAS variant analysis
         """
-        # Merge variant data with GWAS catalog
+        # Merge variants with GWAS data
         gwas_variants = pd.merge(
             variants_df,
             gwas_catalog,
             how='left',
-            on=['chrom', 'pos']
+            left_on='variant_id',
+            right_on='SNPS'
         )
         
         return gwas_variants
-    
-    def analyze_population_frequencies(self, variants_df: pd.DataFrame,
-                                    population: str = "ALL") -> pd.DataFrame:
-        """Analyze population-specific variant frequencies.
-        
-        Args:
-            variants_df: DataFrame of variants
-            population: Population ID (e.g., "ALL", "EUR", "EAS")
-            
-        Returns:
-            DataFrame with population frequency analysis
-        """
-        if population == "ALL":
-            return variants_df
-
-        # Filter for the specified population
-        if population in variants_df.columns:
-            variants_df = variants_df[["chrom", "pos", "id", "ref", "alt", population]].copy()
-            variants_df.rename(columns={population: "frequency"}, inplace=True)
-
-        return variants_df
-    
-    def predict_variant_effects(self, variants_df: pd.DataFrame) -> pd.DataFrame:
-        """Predict functional effects of variants using multiple methods.
-        
-        Args:
-            variants_df: DataFrame of variants
-            
-        Returns:
-            DataFrame with predicted variant effects
-        """
-        # Add a placeholder column for predicted effects
-        variants_df["predicted_effect"] = "Neutral"
-
-        # Example logic: Mark variants with high impact scores as "High Impact"
-        variants_df.loc[variants_df["impact_score"] > 0.8, "predicted_effect"] = "High Impact"
-
-        return variants_df
-    
-    def generate_variant_report(self, variants_df: pd.DataFrame,
-                              output_path: str) -> None:
-        """Generate a comprehensive report of variant analysis results.
-        
-        Args:
-            variants_df: DataFrame of analyzed variants
-            output_path: Path to save the report
-        """
-        # Generate summary statistics
-        summary = {
-            'total_variants': len(variants_df),
-            'high_impact_variants': len(variants_df[variants_df['impact_score'] > 0.8]),
-            'endothelial_variants': len(variants_df[variants_df['is_endothelial'] == True]),
-        }
-        
-        # Save report
-        with open(output_path, 'w') as f:
-            f.write("Variant Analysis Report\n")
-            f.write("=====================\n\n")
-            for key, value in summary.items():
-                f.write(f"{key}: {value}\n")
-            
-        logger.info(f"Variant analysis report saved to {output_path}")
 
 
 def main():

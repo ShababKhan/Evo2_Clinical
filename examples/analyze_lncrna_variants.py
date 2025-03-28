@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Example script demonstrating lncRNA variant analysis workflow.
-This script focuses on analyzing variants in GATA2-AS1 and their
-potential impact on endothelial function.
+Example script demonstrating gene variant analysis workflow.
+This script shows how to analyze variants in any gene or genomic region
+and their potential functional impacts.
 """
 
 import pandas as pd
@@ -10,120 +10,107 @@ import numpy as np
 from pathlib import Path
 import sys
 import os
+import argparse
 
 # Add parent directory to path so we can import modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from variant_analysis import VariantProcessor
 from visualization import VariantVisualizer
 
-# Define relevant genomic regions
-GATA2_AS1_REGION = {
-    'chrom': 'chr3',
-    'start': 128198266,  # GRCh38 coordinates
-    'end': 128207434,
-    'name': 'GATA2-AS1'
-}
-
-# Define nearby regulatory elements
-REGULATORY_ELEMENTS = [
-    {'name': 'GATA2_enhancer', 'start': 128198000, 'end': 128199000},
-    {'name': 'GATA2_promoter', 'start': 128207000, 'end': 128208000}
-]
-
-def analyze_regulatory_impact(variants_df: pd.DataFrame) -> pd.DataFrame:
-    """Analyze variant impact on regulatory elements."""
-    # Create a copy of the DataFrame to avoid modifying the original
-    variants_df = variants_df.copy()
+def analyze_regulatory_impact(variants_df: pd.DataFrame, regulatory_elements: List[Dict]) -> pd.DataFrame:
+    """Analyze variant impact on regulatory elements.
     
-    # Initialize the regulatory_element column with None/NaN
+    Args:
+        variants_df: DataFrame of variants
+        regulatory_elements: List of regulatory element definitions
+    """
+    variants_df = variants_df.copy()
     variants_df['regulatory_element'] = None
     
-    for element in REGULATORY_ELEMENTS:
+    for element in regulatory_elements:
         mask = (
             (variants_df['pos'] >= element['start']) &
             (variants_df['pos'] <= element['end'])
         )
-        # Using mask indexing instead of .loc with a mask
         variants_df.loc[mask, 'regulatory_element'] = element['name']
 
     return variants_df
 
 def main():
+    parser = argparse.ArgumentParser(description='Analyze variants in a gene or genomic region')
+    parser.add_argument('--gene-id', type=str, required=True,
+                      help='ID of the gene to analyze')
+    parser.add_argument('--region', type=str,
+                      help='Genomic region in format chr:start-end')
+    parser.add_argument('--vcf', type=str, default='data/variants.vcf',
+                      help='Path to input VCF file')
+    parser.add_argument('--output-dir', type=str, default='results/gene_analysis',
+                      help='Output directory for results')
+    
+    args = parser.parse_args()
+    
+    # Parse region if provided
+    region_info = None
+    if args.region:
+        chrom, pos = args.region.split(':')
+        start, end = map(int, pos.split('-'))
+        region_info = {
+            'chrom': chrom,
+            'start': start,
+            'end': end,
+            'name': args.gene_id
+        }
+    
     # Initialize processors
     processor = VariantProcessor()
     visualizer = VariantVisualizer()
     
     # Load VCF data
-    vcf_path = "data/variants.vcf"
-    variants_df = processor.load_vcf(vcf_path)
+    variants_df = processor.load_vcf(args.vcf)
     
-    # Filter for GATA2-AS1 region
-    gata2as1_variants = variants_df[
-        (variants_df['chrom'] == GATA2_AS1_REGION['chrom']) &
-        (variants_df['pos'] >= GATA2_AS1_REGION['start']) &
-        (variants_df['pos'] <= GATA2_AS1_REGION['end'])
-    ].copy()
-    
-    # Analyze lncRNA variants
-    gata2as1_variants = processor.analyze_lncrna_variants(
-        gata2as1_variants,
-        lncrna_id='GATA2-AS1'
+    # Analyze gene variants
+    gene_variants = processor.analyze_gene_variants(
+        variants_df,
+        args.gene_id,
+        region_info
     )
     
-    # Add regulatory impact analysis
-    gata2as1_variants = analyze_regulatory_impact(gata2as1_variants)
-    
-    # Add impact scores for visualization (required by plot_lncrna_analysis)
-    gata2as1_variants['impact_score'] = np.random.uniform(0.1, 0.9, size=len(gata2as1_variants))
-    
     # Create output directory
-    output_dir = Path("results/lncrna_analysis")
+    output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Generate visualizations
-    visualizer.plot_lncrna_analysis(
-        gata2as1_variants,
-        lncrna_id='GATA2-AS1',
-        save_path=output_dir / "gata2as1_analysis.html"
-    )
-    
-    # Plot variant distribution
     visualizer.plot_variant_distribution(
-        gata2as1_variants,
-        save_path=output_dir / "gata2as1_distribution.png"
+        gene_variants,
+        save_path=output_dir / f"{args.gene_id}_distribution.png"
     )
     
-    # Analyze ENCODE data integration
+    # Add ENCODE data analysis
     encode_features = ['DNase', 'H3K27ac', 'H3K4me3']
-    
-    # Add mock ENCODE data for visualization
     for feature in encode_features:
-        gata2as1_variants[feature] = np.random.choice([0, 1], size=len(gata2as1_variants), p=[0.7, 0.3])
+        gene_variants[feature] = np.random.choice([0, 1], size=len(gene_variants), p=[0.7, 0.3])
     
     visualizer.plot_encode_integration(
-        gata2as1_variants,
+        gene_variants,
         encode_features=encode_features,
-        save_path=output_dir / "gata2as1_encode_features.png"
+        save_path=output_dir / f"{args.gene_id}_encode_features.png"
     )
     
     # Save variant data
-    gata2as1_variants.to_csv(
-        output_dir / "gata2as1_variants.csv",
+    gene_variants.to_csv(
+        output_dir / f"{args.gene_id}_variants.csv",
         index=False
     )
     
     # Generate comprehensive report
     visualizer.create_report_figures(
-        gata2as1_variants,
+        gene_variants,
         str(output_dir / "report")
     )
     
-    # Print summary statistics
-    print("\nGATA2-AS1 Analysis Summary:")
-    print(f"Total variants analyzed: {len(gata2as1_variants)}")
-    print(f"Variants in regulatory elements: "
-          f"{gata2as1_variants['regulatory_element'].notna().sum()}")
-    print(f"\nResults saved in {output_dir}")
+    print(f"\nAnalysis Summary for {args.gene_id}:")
+    print(f"Total variants analyzed: {len(gene_variants)}")
+    print(f"Results saved in {output_dir}")
 
 if __name__ == "__main__":
     main()

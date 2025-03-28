@@ -1,0 +1,35 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+numpy = "*"
+pandas = "*"
+scipy = "*"
+matplotlib = "*"
+seaborn = "*"
+plotly = "*"
+biopython = "*"
+pysam = "*"
+cyvcf2 = "*"
+pybedtools = "*"
+scikit-allel = "*"
+genomepy = "*"
+pytest = "*"
+pytest-cov = "*"
+pathlib = "*"
+typing = "*"
+scikit-learn = "*"
+jupyter = "*"
+ipywidgets = "*"
+streamlit = "*"
+pygwalker = "*"
+black = "*"
+flake8 = "*"
+mypy = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"

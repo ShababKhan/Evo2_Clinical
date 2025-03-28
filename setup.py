@@ -1,4 +1,4 @@
-# install all data science and bioinformatics libraries for endothelial research program
+# install all data science and bioinformatics libraries for genomic research and analysis
 import os 
 
 os.system('pip install numpy pandas matplotlib seaborn scikit-learn scipy' \
@@ -45,6 +45,10 @@ import cv2
 import dlib
 import pytesseract
 
+# Download the reference genome data
+# Note: This will create a folder structure in the data directory
+
+
 # Bioinformatics and genomics
 try:
     import Bio  # Biopython for sequence analysis
@@ -58,8 +62,8 @@ try:
     import pyensembl  # Access Ensembl data
     import plotly.express as px  # Advanced visualization
     
-    print("All required libraries for the Endothelial Research Program successfully imported.")
-    print("Ready for GWAS analysis, variant scoring with Evo2, and genomic data processing.")
+    print("All required libraries for the Genomic Analysis Pipeline successfully imported.")
+    print("Ready for GWAS analysis, variant scoring with Evo2, and genomic data processing across any gene set.")
 except ImportError as e:
     print(f"Warning: Some bioinformatics libraries not properly installed: {e}")
-    print("Run this script again to attempt reinstallation.") 
+    print("Run this script again to attempt reinstallation.")

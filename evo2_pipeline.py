@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Evo2 Pipeline for Endothelial Research Program
+Evo2 Pipeline for Genomic Analysis
 
-This pipeline integrates computational methods with molecular biology to explore
-the role of endothelial cells in pulmonary disease during cancer treatment.
+This pipeline integrates computational methods with molecular biology to analyze
+genetic variants and their functional impacts across different genes and diseases.
 
 Key components:
 - GWAS catalog integration
 - Variant scoring with Evo2
-- Integration with ENCODE data for cell-specific filtering
+- Integration with ENCODE data
 - AIDO simulations for phenotypic effects
 
 Author: Shabab Khan
@@ -97,24 +97,20 @@ class Evo2Pipeline:
         filtered_data.to_csv(filtered_output_path, sep="\t", index=False)
         logger.info(f"Filtered GWAS catalog saved to {filtered_output_path}")
 
-    def filter_endothelial_genes(self, gene_list: List[str] = None):
-        """Filter for endothelial-specific genes.
+    def filter_genes_of_interest(self, gene_list: List[str]) -> List[str]:
+        """Filter for genes of interest.
         
         Args:
-            gene_list: Optional list of endothelial genes to focus on
+            gene_list: List of genes to analyze
         """
-        # Default endothelial-related genes from literature
-        default_genes = [
-            "GATA2", "GATA2-AS1", "EPAS1", "KDR", "FLT1", "TEK", 
-            "PECAM1", "VWF", "VCAM1", "ICAM1", "NOS3", "EDN1"
-        ]
-        
-        genes_to_use = gene_list if gene_list else default_genes
-        logger.info(f"Filtering for endothelial genes: {genes_to_use}")
-        
-        return genes_to_use
-        
-    def run_evo2_scoring(self, variants_file: str, window_size: int = 1000000):        #######   START HERE 27 march 2025  *******    #######
+        if not gene_list:
+            logger.error("No genes specified for analysis")
+            return []
+            
+        logger.info(f"Filtering for genes of interest: {gene_list}")
+        return gene_list
+
+    def run_evo2_scoring(self, variants_file: str, window_size: int = 1000000):
         """Run Evo2 variant functional impact scoring.
         
         Args:
@@ -125,11 +121,11 @@ class Evo2Pipeline:
         # Placeholder for Evo2 scoring functionality
         # In practice, this would call the Evo2 tool with appropriate parameters
         
-    def filter_encode_data(self, cell_type: str = "ENDO"):
+    def filter_encode_data(self, cell_type: str):
         """Filter ENCODE data for specific cell types.
         
         Args:
-            cell_type: Cell type to filter for (default: endothelial)
+            cell_type: Cell type to filter for
         """
         encode_data_path = Path(self.data_dir) / "encode_data.tsv"
         logger.info(f"Filtering ENCODE data for cell type: {cell_type}")
@@ -166,78 +162,62 @@ class Evo2Pipeline:
         results_df.to_csv(output_path, index=False)
         logger.info(f"AIDO simulation results saved to {output_path}")
 
-    def analyze_gata2as1(self):
-        """Specific analysis for GATA2-AS1 lncRNA functionality."""
-        logger.info("Analyzing GATA2-AS1 lncRNA variants")
+    def analyze_variants(self, gene_id: str):
+        """Analyze variants for a specific gene.
+        
+        Args:
+            gene_id: ID of the gene to analyze
+        """
+        logger.info(f"Analyzing variants in gene: {gene_id}")
         vcf_path = Path(self.data_dir) / "variants.vcf"
         if not vcf_path.exists():
             logger.error("VCF file not found. Please ensure it is available.")
             return
 
         variants_df = pd.read_csv(vcf_path, sep="\t")
-        gata2as1_variants = variants_df[variants_df['gene'] == "GATA2-AS1"]
-        output_path = Path(self.output_dir) / "gata2as1_analysis.csv"
-        gata2as1_variants.to_csv(output_path, index=False)
-        logger.info(f"GATA2-AS1 analysis results saved to {output_path}")
-        
-    def analyze_emt_genes(self):
-        """Analyze genes in endothelial-mesenchymal transition pipeline."""
-        emt_genes = [
-            "SNAI1", "SNAI2", "ZEB1", "ZEB2", "TWIST1", "TWIST2",
-            "CDH1", "CDH2", "VIM", "FN1", "COL1A1", "ACTA2"
-        ]
-        
-        logger.info(f"Analyzing endothelial-mesenchymal transition genes: {emt_genes}")
-        # Implementation for EMT gene analysis
-        
-    def analyze_cteph_gwas(self):
-        """Analyze GWAS data for chronic thromboembolic pulmonary hypertension."""
-        logger.info("Analyzing CTEPH GWAS data")
-        # Implementation for CTEPH GWAS analysis
-        
-    def analyze_pah_variants(self):
-        """Analyze known genetic variants of pulmonary arterial hypertension."""
-        pah_genes = ["BMPR2", "ALK1", "ENG", "SMAD9", "CAV1", "KCNK3", "TBX4"]
-        logger.info(f"Analyzing PAH-related genes: {pah_genes}")
-        # Implementation for PAH variant analysis
-        
-    def analyze_mpm_variants(self):
-        """Analyze functional consequences of genetic variation in malignant pleural mesothelioma."""
-        logger.info("Analyzing malignant pleural mesothelioma genetic variants")
-        # Implementation for MPM variant analysis
-        
+        gene_variants = variants_df[variants_df['gene'] == gene_id]
+        output_path = Path(self.output_dir) / f"{gene_id}_analysis.csv"
+        gene_variants.to_csv(output_path, index=False)
+        logger.info(f"Gene analysis results saved to {output_path}")
+
     def generate_reports(self):
         """Generate final reports and visualizations."""
         logger.info("Generating final reports and visualizations")
         # Implementation for report generation
+
+    def run_pipeline(self, genes: List[str], cell_types: List[str] = None, traits: List[str] = None):
+        """Run the complete Evo2 pipeline.
         
-    def run_pipeline(self):
-        """Run the complete Evo2 pipeline."""
+        Args:
+            genes: List of genes to analyze
+            cell_types: Optional list of cell types to filter for
+            traits: Optional list of traits/diseases to include
+        """
         logger.info("Starting Evo2 pipeline execution")
         
         # Step 1: Download required data
         self.download_1000g_data()
-        self.download_gwas_catalog()
+        if traits:
+            self.download_gwas_catalog(traits)
         
-        # Step 2: Filter for endothelial genes
-        endothelial_genes = self.filter_endothelial_genes()
+        # Step 2: Filter for genes of interest
+        genes_to_analyze = self.filter_genes_of_interest(genes)
         
         # Step 3: Run Evo2 scoring on variants
         self.run_evo2_scoring("variants.vcf")
         
-        # Step 4: Filter with ENCODE data
-        self.filter_encode_data()
+        # Step 4: Filter with ENCODE data if cell types specified
+        if cell_types:
+            for cell_type in cell_types:
+                self.filter_encode_data(cell_type)
         
-        # Step 5: Run specific analyses
-        self.analyze_gata2as1()
-        self.analyze_emt_genes()
-        self.analyze_cteph_gwas()
-        self.analyze_pah_variants()
-        self.analyze_mpm_variants()
+        # Step 5: Analyze variants for each gene
+        for gene in genes_to_analyze:
+            self.analyze_variants(gene)
         
         # Step 6: Run AIDO simulations
-        # Placeholder for selecting top variants
-        top_variants = ["rs12345", "rs67890"]
+        # Get top variants for simulation
+        top_variants = ["rs12345", "rs67890"]  # This should be populated based on analysis results
         self.run_aido_simulation(top_variants)
         
         # Step 7: Generate reports
@@ -271,9 +251,9 @@ def main():
     pipeline = Evo2Pipeline(config)
     
     if args.genes:
-        genes = pipeline.filter_endothelial_genes(args.genes)
+        genes = pipeline.filter_genes_of_interest(args.genes)
     
-    pipeline.run_pipeline()
+    pipeline.run_pipeline(genes, traits=args.gwas_traits)
     
 
 if __name__ == "__main__":
