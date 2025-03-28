@@ -1,0 +1,36 @@
+# Core data analysis and scientific computing
+numpy
+pandas
+scipy
+
+# Visualization
+matplotlib
+seaborn
+plotly
+
+# Bioinformatics tools
+biopython
+pysam
+cyvcf2
+pybedtools
+scikit-allel
+
+# Testing
+pytest
+pytest-cov
+
+# Logging and utilities
+pathlib
+typing
+
+# Machine Learning (for variant impact prediction)
+scikit-learn
+
+# Interactive visualization
+jupyter
+ipywidgets
+
+# Development tools
+black
+flake8
+mypy
