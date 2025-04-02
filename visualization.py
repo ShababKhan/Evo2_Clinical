@@ -31,7 +31,6 @@ class VariantVisualizer:
     
     def __init__(self):
         """Initialize the visualizer with default style settings."""
-        plt.style.use('seaborn')
         self.default_figsize = (10, 6)
         self.color_palette = "viridis"
         

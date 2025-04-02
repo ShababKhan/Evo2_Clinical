@@ -85,10 +85,13 @@ class Evo2Pipeline:
             traits = ["pulmonary", "lung", "fibrosis", "pneumonitis", 
                      "pulmonary arterial hypertension", "pulmonary vascular"]
 
-        url = "https://www.ebi.ac.uk/gwas/api/search/downloads/full"
         output_path = Path(self.data_dir) / "gwas_catalog.tsv"
-        logger.info(f"Downloading GWAS catalog to {output_path}")
-        os.system(f"wget -O {output_path} {url}")
+        if output_path.exists():
+            logger.info(f"GWAS catalog already exists at {output_path}. Skipping download.")
+        else:
+            url = "https://www.ebi.ac.uk/gwas/api/search/downloads/full"
+            logger.info(f"Downloading GWAS catalog to {output_path}")
+            os.system(f"wget -O {output_path} {url}")
 
         # Filter for traits of interest
         gwas_data = pd.read_csv(output_path, sep="\t")
