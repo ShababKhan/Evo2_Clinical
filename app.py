@@ -30,19 +30,66 @@ if 'pipeline' not in st.session_state:
         "output_dir": "results"
     })
 
-def load_variant_data(vcf_file: Optional[str] = None) -> pd.DataFrame:
-    """Load variant data from VCF file or use example data."""
+def load_variant_data(vcf_file: Optional[str] = None, chromosomes: List[str] = None) -> pd.DataFrame:
+    """Load variant data from VCF file or specific chromosomes.
+    
+    Args:
+        vcf_file: Optional VCF file uploaded by user
+        chromosomes: List of chromosomes to analyze
+        
+    Returns:
+        DataFrame containing variant data
+    """
+    processor = VariantProcessor()
+    
+    # If user uploaded a file, use that
     if vcf_file:
-        processor = VariantProcessor()
         return processor.load_vcf(vcf_file)
-    return pd.DataFrame()  # Return empty DataFrame if no file provided
+    
+    # Otherwise load from chromosome-specific files
+    elif chromosomes:
+        return processor.load_multiple_chromosomes(chromosomes)
+        
+    # Return empty DataFrame if no data source specified
+    return pd.DataFrame()
 
 def main():
     st.title("🧬 Evo2 Clinical Analysis")
+    
+    # API Settings
+    st.sidebar.header("NVIDIA Evo2 API Settings")
+    use_nvidia_api = st.sidebar.checkbox(
+        "Use NVIDIA Evo2 API", 
+        value=True,
+        help="Use NVIDIA Evo2 cloud service for variant scoring"
+    )
+    
+    # Only show API key input if API is being used
+    if use_nvidia_api:
+        api_key = st.sidebar.text_input(
+            "NVIDIA API Key", 
+            type="password",
+            help="Enter your NVIDIA Evo2 API key (leave empty to use NVIDIA_EVO2_API_KEY environment variable)"
+        )
+        
+        if api_key:
+            # Store API key in session state
+            st.session_state.api_key = api_key
+        
+    # Analysis Settings    
     st.sidebar.header("Analysis Settings")
 
     # File upload section
     vcf_file = st.sidebar.file_uploader("Upload VCF File", type=["vcf", "vcf.gz"])
+    
+    # Chromosome selection
+    available_chromosomes = [str(i) for i in range(1, 23)] + ["X", "Y"]
+    selected_chromosomes = st.sidebar.multiselect(
+        "Select Chromosomes",
+        available_chromosomes,
+        default=["19"],
+        help="Select one or more chromosomes to analyze"
+    )
     
     # Gene selection
     genes = st.sidebar.text_input(
@@ -71,76 +118,82 @@ def main():
         ["Variant Distribution", "Impact Scores", "Population Frequencies", "ENCODE Features"]
     )
 
-    # Load data when user provides input
+    # Load data based on user input
+    data_loaded = False
+    variants_df = pd.DataFrame()
+    
     if vcf_file:
-        st.info("Loading and processing variant data...")
-        variants_df = load_variant_data(vcf_file)
+        st.info("Loading and processing variant data from uploaded file...")
+        variants_df = load_variant_data(vcf_file=vcf_file)
+        data_loaded = not variants_df.empty
+    elif selected_chromosomes:
+        st.info(f"Loading and processing variant data from chromosomes: {', '.join(selected_chromosomes)}...")
+        variants_df = load_variant_data(chromosomes=selected_chromosomes)
+        data_loaded = not variants_df.empty
         
-        if not variants_df.empty:
-            # Create tabs for different views
-            tab1, tab2 = st.tabs(["PyGWalker Analysis", "Preset Visualizations"])
+    if data_loaded:
+        # Create tabs for different views
+        tab1, tab2 = st.tabs(["PyGWalker Analysis", "Preset Visualizations"])
+        
+        with tab1:
+            st.subheader("Interactive Data Analysis")
+            pyg.walk(variants_df, env='Streamlit')
+        
+        with tab2:
+            st.subheader("Preset Visualizations")
             
-            with tab1:
-                st.subheader("Interactive Data Analysis")
-                pyg.walk(variants_df, env='Streamlit')
+            if analysis_type == "Variant Distribution":
+                fig = px.histogram(
+                    variants_df,
+                    x='pos',
+                    color='gene',
+                    title="Variant Distribution Across Genomic Positions"
+                )
+                st.plotly_chart(fig)
             
-            with tab2:
-                st.subheader("Preset Visualizations")
-                
-                if analysis_type == "Variant Distribution":
-                    fig = px.histogram(
+            elif analysis_type == "Impact Scores":
+                if 'impact_score' in variants_df.columns:
+                    fig = px.box(
                         variants_df,
-                        x='pos',
-                        color='gene',
-                        title="Variant Distribution Across Genomic Positions"
+                        x='gene',
+                        y='impact_score',
+                        title="Impact Score Distribution by Gene"
                     )
                     st.plotly_chart(fig)
-                
-                elif analysis_type == "Impact Scores":
-                    if 'impact_score' in variants_df.columns:
-                        fig = px.box(
+            
+            elif analysis_type == "Population Frequencies":
+                if any(col.startswith('AF_') for col in variants_df.columns):
+                    freq_cols = [col for col in variants_df.columns if col.startswith('AF_')]
+                    for col in freq_cols:
+                        fig = px.violin(
                             variants_df,
                             x='gene',
-                            y='impact_score',
-                            title="Impact Score Distribution by Gene"
-                        )
-                        st.plotly_chart(fig)
-                
-                elif analysis_type == "Population Frequencies":
-                    if any(col.startswith('AF_') for col in variants_df.columns):
-                        freq_cols = [col for col in variants_df.columns if col.startswith('AF_')]
-                        for col in freq_cols:
-                            fig = px.violin(
-                                variants_df,
-                                x='gene',
-                                y=col,
-                                title=f"Allele Frequency Distribution - {col}"
-                            )
-                            st.plotly_chart(fig)
-                
-                elif analysis_type == "ENCODE Features":
-                    encode_features = ['DNase', 'H3K27ac', 'H3K4me3']
-                    if all(feat in variants_df.columns for feat in encode_features):
-                        fig = px.bar(
-                            variants_df[encode_features].sum().reset_index(),
-                            x='index',
-                            y=0,
-                            title="ENCODE Feature Counts"
+                            y=col,
+                            title=f"Allele Frequency Distribution - {col}"
                         )
                         st.plotly_chart(fig)
             
-            # Add download button for processed data
-            st.download_button(
-                "Download Processed Data",
-                variants_df.to_csv(index=False).encode('utf-8'),
-                "processed_variants.csv",
-                "text/csv",
-                key='download-csv'
-            )
-        else:
-            st.error("No variant data found in the uploaded file.")
+            elif analysis_type == "ENCODE Features":
+                encode_features = ['DNase', 'H3K27ac', 'H3K4me3']
+                if all(feat in variants_df.columns for feat in encode_features):
+                    fig = px.bar(
+                        variants_df[encode_features].sum().reset_index(),
+                        x='index',
+                        y=0,
+                        title="ENCODE Feature Counts"
+                    )
+                    st.plotly_chart(fig)
+        
+        # Add download button for processed data
+        st.download_button(
+            "Download Processed Data",
+            variants_df.to_csv(index=False).encode('utf-8'),
+            "processed_variants.csv",
+            "text/csv",
+            key='download-csv'
+        )
     else:
-        st.info("Please upload a VCF file to begin analysis.")
+        st.error("No variant data found in the uploaded file or selected chromosomes.")
 
     # Add documentation section
     with st.sidebar.expander("Documentation"):
