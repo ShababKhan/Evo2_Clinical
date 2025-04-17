@@ -23,6 +23,7 @@ pytest-cov
 # Logging and utilities
 pathlib
 typing
+requests
 
 # Machine Learning (for variant impact prediction)
 scikit-learn
@@ -30,9 +31,13 @@ scikit-learn
 # Interactive visualization
 jupyter
 ipywidgets
-streamlit
-pygwalker
+dash>=2.0.0
+dash-core-components
+dash-html-components
+dash-table
+dash-bio
 plotly
+streamlit>=1.22.0
 
 # Development tools
 black

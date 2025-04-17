@@ -173,3 +173,15 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 Project_Overview.md
+data/.DS_Store
+data/1000genomes/chr19_variants.vcf
+data/1000genomes/chr19_variants.vcf.gz
+data/encode/endothelial_peaks_1.bed
+data/encode/endothelial_peaks_1.bed.gz
+data/encode/endothelial_peaks_2.bed
+data/encode/endothelial_peaks_2.bed.gz
+data/gwas/gwas-catalog-associations.tsv
+data/reference/GRCh38.chr19.fa
+data/reference/GRCh38.chr19.fa.gz
+data/reference/GRCh38.genes.gtf
+data/reference/GRCh38.genes.gtf.gz
