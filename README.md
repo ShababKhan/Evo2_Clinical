@@ -167,6 +167,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🙏 Acknowledgments
-
-- Research support from [Research Institution Name]
-- Computational resources provided by [Resource Provider Name]
+* Jeffrey Man, MD/PhD
