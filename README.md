@@ -1,123 +1,172 @@
-# Evo2 Clinical
+# Evo2_Clinical: Decoding Endothelial Influence on Pulmonary Disease
 
-A comprehensive bioinformatics pipeline for analyzing endothelial genetic variants in pulmonary diseases and cancer care.
+![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Python](https://img.shields.io/badge/python-%3E%3D3.8-green)
+![License](https://img.shields.io/badge/license-MIT-yellow)
 
-## Overview
+**Evo2_Clinical** is a computational framework for investigating endothelial influence on pulmonary disease, integrating computational insights with molecular biology. This project aims to understand the role of the endothelium in pulmonary disease progression throughout cancer treatment.
 
-Evo2 Clinical is a Python-based computational pipeline that integrates various genomic analysis tools to study the role of endothelial cells in pulmonary disease progression, with a special focus on cancer treatment contexts.
+## 🧬 Project Overview
 
-## Installation
+Evo2_Clinical focuses on the endothelium (endothelial cells) and their role in lung inflammation and fibrosis during cancer care. The framework integrates multiple data sources, scoring algorithms, and analytical methods to provide insights into genetic variants and lncRNA functionality in endothelial cells.
+
+### 🔍 Disease Areas
+
+- Chronic Thromboembolic Pulmonary Hypertension (CTEPH)
+- Pulmonary Arterial Hypertension (PAH)
+- Radiation/Drug-induced Pneumonitis and Fibrosis
+- Malignant Pleural Mesothelioma
+- Pulmonary Vascular Diseases
+
+### 🧪 Specific Molecules/Genes of Interest
+
+- **lncRNAs**: ANRIL, PIRAT, LRAC (LINC01899), GATA2-AS1
+- Genes involved in Hypoxia Regulation (e.g., EPAS1 SNPs)
+- Genes involved in Endothelial-Mesenchymal Transition (EMT)
+- Epigenetic Mediators
+- Endothelial genes
+
+## ⚙️ Installation
 
 ```bash
-# Using pipenv (recommended)
-pipenv install
+# Clone the repository
+git clone https://github.com/yourusername/Evo2_Clinical.git
+cd Evo2_Clinical
 
-# Using pip
+# Install the package
+pip install -e .
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Key Features
+## 🚀 Quick Start
 
-### 1. Variant Analysis
-- Analysis of common and rare variants from 1000 Genomes Project
-- Focus on endothelial-specific genes
-- Integration with GWAS catalog data
-- Identification of linkage disequilibrium regions
+### Using the Command Line Interface (CLI)
 
-### 2. LncRNA Analysis
-- Specialized analysis of GATA2-AS1 and other endothelial lncRNAs
-- Functional scoring system for lncRNA variants
-- Integration with ENCODE data for cell-specific activity
-
-### 3. Population Genetics
-- Analysis of population-specific variants
-- Special focus on adaptive variants (e.g., EPAS1 mutations in Tibetan Highlanders)
-- Comparative population frequency analysis
-
-### 4. Visualization Tools
-- Population frequency distribution plots
-- Variant distribution visualization
-- ENCODE feature visualization
-- Custom report generation
-
-## Usage Examples
-
-### Analyzing Population Frequencies
-```python
-from variant_analysis import analyze_population_frequencies
-from visualization import plot_frequencies
-
-# Analyze frequencies across populations
-frequencies = analyze_population_frequencies("chr19")
-```
-
-### LncRNA Analysis
-```python
-from variant_analysis import analyze_lncrna_variants
-
-# Analyze GATA2-AS1 variants
-results = analyze_lncrna_variants("GATA2-AS1")
-```
-
-### Endothelial Variant Analysis
-```python
-from variant_analysis import analyze_endothelial_variants
-
-# Analyze endothelial-specific variants
-variants = analyze_endothelial_variants()
-```
-
-## Directory Structure
-
-- `data/`: Raw and processed data files
-- `examples/`: Example scripts demonstrating package usage
-- `results/`: Output files and analysis results
-- `tests/`: Unit tests
-- Main pipeline modules:
-  - `evo2_pipeline.py`: Core pipeline functionality
-  - `variant_analysis.py`: Variant analysis functions
-  - `visualization.py`: Data visualization tools
-
-## Results Output
-
-Analysis results are stored in the `results/` directory with the following structure:
-- `chr19_analysis/`: Population-specific frequency analysis
-- `lncrna_analysis/`: LncRNA variant analysis results
-- Each analysis includes:
-  - CSV files with detailed data
-  - Visualization plots
-  - HTML reports where applicable
-
-## Testing
-
-Run the test suite using:
 ```bash
-pytest tests/
+# Run the basic pipeline
+evo2-clinical run --config path/to/config.yml
+
+# Score variants
+evo2-clinical score-variants --vcf path/to/variants.vcf --output results/
+
+# Analyze lncRNAs
+evo2-clinical analyze-lncrna --input path/to/lncrna_list.txt --output results/
 ```
 
-## Dependencies
+### Using the Streamlit GUI
 
-Key dependencies include:
-- numpy
-- pandas
-- scipy
-- biopython
-- pysam
-- cyvcf2
-- scikit-allel
-- matplotlib
-- seaborn
-- plotly
+```bash
+# Launch the Streamlit interface
+streamlit run evo2_clinical_app.py
+```
 
-## Contributing
+### Using the Python API
 
-Please read our contributing guidelines before submitting pull requests.
+```python
+from evo2_clinical.pipeline.main import Pipeline
+from evo2_clinical.config import Config
 
-## License
+# Initialize the pipeline with config
+config = Config("path/to/config.yml")
+pipeline = Pipeline(config)
+
+# Run the full pipeline
+pipeline.run()
+
+# Or run specific analyses
+variants_df = pipeline.score_variants(vcf_path="path/to/variants.vcf")
+lncrna_df = pipeline.analyze_lncrnas(lncrna_list=["GATA2-AS1", "ANRIL"])
+```
+
+## 📊 Database Outputs
+
+The framework generates several databases containing critical information:
+
+1. **Endothelial Variants Database**: Common and rare genetic variants from the 1000 Genomes project found within endothelial genes.
+2. **lncRNA Functionality Database**: Functionality scores for endothelial lncRNAs.
+3. **GATA2-AS1 Predictions Database**: Predictions of variant effects specifically for the lncRNA GATA2-AS1.
+4. **Epigenetic Mediator Scores Database**: Scores for epigenetic mediators with functionally relevant SNPs.
+5. **Functional Variants Database**: Focused on EMT pathway genes, CTEPH GWAS, PAH variants, and mesothelioma variants.
+
+## 🧠 Core Components
+
+### Data Integration
+
+- GWAS Catalogs integration (trait-associated loci)
+- HapMap/1000 Genomes Data processing
+- ENCODE Data integration for cell-specific activity filtering (ENDOS)
+
+### Analysis Tools
+
+- Variant & Function Scoring using the Evo2 methodology
+- lncRNA functionality scoring
+- Phenotypic simulation
+- Translational bridging between animal models and human contexts
+
+## 📁 Project Structure
+
+```
+Evo2_Clinical/
+├── evo2_clinical/            # Core package
+│   ├── __init__.py
+│   ├── cli.py                # Command-line interface
+│   ├── config.py             # Configuration utilities
+│   ├── analysis/             # Analysis modules
+│   │   ├── variant_scoring.py
+│   │   └── lncrna_scoring.py
+│   ├── data/                 # Data handling modules
+│   │   └── io.py
+│   ├── database/             # Database management
+│   │   └── manager.py
+│   ├── pipeline/             # Pipeline orchestration
+│   │   └── main.py
+│   └── utils/                # Utility functions
+│       └── helpers.py
+├── evo2_clinical_app.py      # Streamlit GUI application
+├── data/                     # Example/reference data
+├── examples/                 # Example scripts
+├── tests/                    # Unit tests
+├── output/                   # Output directory
+│   ├── databases/            # Generated databases
+│   └── logs/                 # Log files
+├── requirements.txt          # Python dependencies
+├── setup.py                  # Package setup file
+└── README.md                 # This file
+```
+
+## 🔧 Configuration
+
+The Evo2_Clinical framework uses YAML configuration files to specify data paths, tool settings, and output directories. Example:
+
+```yaml
+DATA_PATHS:
+  gwas_catalog: "data/gwas/gwas-catalog-associations.tsv"
+  1000_genomes_vcf: "data/1000genomes/chr19_variants.vcf.gz"
+  reference_genome: "data/reference/GRCh38.chr19.fa.gz"
+  
+TOOL_PATHS:
+  evo2_executable: "bin/evo2_tool"
+  
+OUTPUT_DIRS:
+  databases: "output/databases"
+  logs: "logs"
+```
+
+## 📚 Documentation
+
+For detailed documentation, please refer to the [Wiki](https://github.com/yourusername/Evo2_Clinical/wiki) or the [Documentation](https://evo2-clinical.readthedocs.io/).
+
+## 👥 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Citation
+## 🙏 Acknowledgments
 
-If you use this software in your research, please cite:
-[Citation information to be added]
+- Research support from [Research Institution Name]
+- Computational resources provided by [Resource Provider Name]
