@@ -19,6 +19,95 @@ from ..config import config
 logger = logging.getLogger(__name__)
 
 
+class VariantScorer:
+    """
+    Class for scoring genetic variants for functional impact.
+    Serves as the main interface for variant scoring functionality.
+    """
+    
+    def __init__(self, evo2_path: Optional[str] = None, options: Optional[Dict[str, Any]] = None):
+        """
+        Initialize the VariantScorer with path to the Evo2 executable and options.
+        
+        Args:
+            evo2_path: Path to the Evo2 executable or interface.
+            options: Optional dictionary of additional options for scoring.
+        """
+        self.evo2_runner = Evo2Runner(evo2_path=evo2_path, options=options)
+    
+    def score_variants(self, variants_df: pd.DataFrame, context_window: int = 1000000) -> pd.DataFrame:
+        """
+        Score genetic variants for functional impact.
+        
+        Args:
+            variants_df: DataFrame of genetic variants to score.
+            context_window: Size of context window in base pairs (default: 1,000,000).
+        
+        Returns:
+            DataFrame with added functional scores for each variant.
+        """
+        return self.evo2_runner.score_variants(variants_df, context_window=context_window)
+    
+    def predict_effects(self, variants_df: pd.DataFrame, target_gene: str) -> pd.DataFrame:
+        """
+        Predict effects of variants on a specific gene.
+        
+        Args:
+            variants_df: DataFrame of genetic variants to predict effects for.
+            target_gene: Target gene name to analyze effects on.
+        
+        Returns:
+            DataFrame with predicted effects for each variant.
+        """
+        return self.evo2_runner.predict_variant_effects(variants_df, target_gene=target_gene)
+    
+    def analyze_emt_pathway(self, variants_df: pd.DataFrame, emt_genes_list: List[str]) -> pd.DataFrame:
+        """
+        Analyze variants in EMT pathway genes.
+        
+        Args:
+            variants_df: DataFrame of variants to analyze.
+            emt_genes_list: List of EMT gene names.
+        
+        Returns:
+            DataFrame with scores for EMT gene variants.
+        """
+        return analyze_emt_genes(variants_df, emt_genes_list, evo2_path=self.evo2_runner.evo2_path)
+    
+    def analyze_epigenetic_mediators(self, variants_df: pd.DataFrame, epigenetic_genes: List[str]) -> pd.DataFrame:
+        """
+        Analyze epigenetic mediator variants.
+        
+        Args:
+            variants_df: DataFrame of variants to analyze.
+            epigenetic_genes: List of epigenetic mediator gene names.
+        
+        Returns:
+            DataFrame with scores for epigenetic mediator variants.
+        """
+        return analyze_epigenetic_mediators(variants_df, epigenetic_genes, evo2_path=self.evo2_runner.evo2_path)
+    
+    def run_translational_bridging(self, human_variants_df: pd.DataFrame, animal_model_data: pd.DataFrame, 
+                                 context_window: int = 1000000) -> pd.DataFrame:
+        """
+        Run translational bridging between human and animal model data.
+        
+        Args:
+            human_variants_df: Human variant data.
+            animal_model_data: Variant data from the animal model.
+            context_window: Size of context window in base pairs.
+        
+        Returns:
+            DataFrame with translational bridging results.
+        """
+        return run_swap_snp_pipeline(
+            human_variants_df, 
+            animal_model_data, 
+            evo2_path=self.evo2_runner.evo2_path, 
+            context_window=context_window
+        )
+
+
 class Evo2Runner:
     """
     Class for interfacing with the Evo2 tool to score genetic variants.

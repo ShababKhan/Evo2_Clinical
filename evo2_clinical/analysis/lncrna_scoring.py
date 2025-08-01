@@ -18,7 +18,7 @@ from ..config import config
 logger = logging.getLogger(__name__)
 
 
-class lncRNAScorer:
+class LncRNAScorer:
     """
     Class for scoring lncRNA functionality using the Evo2 tool.
     """
@@ -216,7 +216,7 @@ def run_evo2_lncrna_scoring(lncrnas: Union[List[str], pd.DataFrame],
     Returns:
         DataFrame with lncRNA names and their functionality scores.
     """
-    scorer = lncRNAScorer(evo2_path=evo2_path)
+    scorer = LncRNAScorer(evo2_path=evo2_path)
     return scorer.score_lncrnas(lncrnas)
 
 
@@ -246,7 +246,7 @@ def analyze_specific_lncrnas(lncrna_list: List[str], target_lncrnas: List[str],
         return pd.DataFrame(columns=all_scores_df.columns)
     
     # Enrich with additional analyses
-    scorer = lncRNAScorer(evo2_path=evo2_path)
+    scorer = LncRNAScorer(evo2_path=evo2_path)
     
     # Perform detailed structure analysis for each target lncRNA
     structure_data = []

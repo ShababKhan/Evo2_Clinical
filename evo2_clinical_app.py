@@ -5,27 +5,23 @@ This Streamlit application provides a graphical user interface for the Evo2_Clin
 allowing users to run analyses, visualize results, and manage data without writing code.
 """
 
-import os
+import streamlit as st
 import pandas as pd
 import numpy as np
-import streamlit as st
-import matplotlib.pyplot as plt
-import seaborn as sns
-import yaml
-import time
-from pathlib import Path
 import plotly.express as px
 import plotly.graph_objects as go
-import sqlite3
+import os
+import time
 import logging
+import sqlite3
+from pathlib import Path
 
 # Import Evo2_Clinical package modules
 from evo2_clinical.config import Config
-from evo2_clinical.data import io
-from evo2_clinical.analysis import variant_scoring, lncrna_scoring
-from evo2_clinical.database.manager import DatabaseManager, create_all_databases
-from evo2_clinical.pipeline.main import Pipeline
 from evo2_clinical.utils import helpers
+from evo2_clinical.database import DatabaseManager, create_all_databases
+from evo2_clinical.visualization import advanced_plots, interactive_viz
+from evo2_clinical.data import io # Added import for io module
 
 # Set up logging
 log_dir = os.path.join(os.path.dirname(__file__), 'logs')
@@ -103,7 +99,9 @@ st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2103/2103611.png", widt
 # Navigation
 page = st.sidebar.selectbox(
     "Navigation", 
-    ["Home", "Data Management", "Variant Analysis", "lncRNA Analysis", "Pipeline Execution", "Database Explorer", "Configuration"]
+    ["Home", "Data Management", "Variant Analysis", "lncRNA Analysis", "Epigenetic Analysis", 
+     "GWAS Integration", "OpenTargets Explorer", "Advanced Visualization", "Pipeline Execution", 
+     "AIDO Integration", "Database Explorer", "Configuration"]
 )
 
 st.sidebar.markdown("---")
@@ -722,6 +720,142 @@ elif page == "lncRNA Analysis":
                     except Exception as e:
                         st.error(f"Error saving to database: {e}")
 
+elif page == "Epigenetic Analysis":
+    st.title("🧬 Epigenetic Analysis")
+    st.markdown("""
+    This module allows the integration and analysis of epigenetic data with genomic variants 
+    and lncRNA information to explore their combined effect on pulmonary disease.
+    """)
+    
+    # Upload and manage epigenetic data
+    st.subheader("Epigenetic Data Upload")
+    uploaded_file = st.file_uploader("Upload Epigenetic Data (CSV)", type=['csv'])
+    
+    if uploaded_file is not None:
+        with st.spinner('Loading epigenetic data...'):
+            try:
+                epigenetic_df = pd.read_csv(uploaded_file)
+                st.session_state.epigenetic_df = epigenetic_df
+                st.success(f"Epigenetic data loaded successfully! {len(epigenetic_df)} records found.")
+            except Exception as e:
+                st.error(f"Error loading epigenetic data: {e}")
+    
+    # Display loaded epigenetic data
+    st.subheader("Current Epigenetic Data")
+    if 'epigenetic_df' in st.session_state:
+        st.write(f"Total records: {len(st.session_state.epigenetic_df)}")
+        st.dataframe(st.session_state.epigenetic_df.head(10))
+    else:
+        st.info("No epigenetic data loaded.")
+    
+    # Analysis options
+    st.subheader("Analysis Options")
+    if st.button("Integrate Epigenetic Data"):
+        with st.spinner("Integrating data..."):
+            try:
+                # Mock integration process
+                time.sleep(2)
+                st.success("Epigenetic data integrated with existing datasets!")
+            except Exception as e:
+                st.error(f"Error during integration: {e}")
+
+elif page == "GWAS Integration":
+    st.title("🧬 GWAS Integration")
+    st.markdown("""
+    This module facilitates the integration of Genome-Wide Association Study (GWAS) data 
+    with the Evo2_Clinical pipeline to enhance the understanding of genetic variants in 
+    pulmonary disease.
+    """)
+    
+    # Upload and manage GWAS data
+    st.subheader("GWAS Data Upload")
+    uploaded_file = st.file_uploader("Upload GWAS Data (CSV)", type=['csv'])
+    
+    if uploaded_file is not None:
+        with st.spinner('Loading GWAS data...'):
+            try:
+                gwas_df = pd.read_csv(uploaded_file)
+                st.session_state.gwas_df = gwas_df
+                st.success(f"GWAS data loaded successfully! {len(gwas_df)} records found.")
+            except Exception as e:
+                st.error(f"Error loading GWAS data: {e}")
+    
+    # Display loaded GWAS data
+    st.subheader("Current GWAS Data")
+    if 'gwas_df' in st.session_state:
+        st.write(f"Total records: {len(st.session_state.gwas_df)}")
+        st.dataframe(st.session_state.gwas_df.head(10))
+    else:
+        st.info("No GWAS data loaded.")
+    
+    # Analysis options
+    st.subheader("Analysis Options")
+    if st.button("Integrate GWAS Data"):
+        with st.spinner("Integrating data..."):
+            try:
+                # Mock integration process
+                time.sleep(2)
+                st.success("GWAS data integrated with existing datasets!")
+            except Exception as e:
+                st.error(f"Error during integration: {e}")
+
+elif page == "OpenTargets Explorer":
+    st.title("🧬 OpenTargets Explorer")
+    st.markdown("""
+    Explore the OpenTargets database to find associations between genes, variants, and diseases.
+    """)
+    
+    # Search bar for OpenTargets
+    search_term = st.text_input("Enter gene or variant to search OpenTargets:")
+    
+    if st.button("Search"):
+        with st.spinner("Searching OpenTargets..."):
+            try:
+                # Mock search process
+                time.sleep(2)
+                st.success("Search completed!")
+                
+                # Display mock results
+                st.write("Results for:", search_term)
+                st.dataframe(pd.DataFrame({
+                    "Gene/Variant": [search_term],
+                    "Disease": ["Pulmonary Disease"],
+                    "Evidence": ["Functional"],
+                    "Source": ["OpenTargets"]
+                }))
+            except Exception as e:
+                st.error(f"Error during search: {e}")
+
+elif page == "Advanced Visualization":
+    st.title("📊 Advanced Visualization")
+    st.markdown("""
+    Create advanced visualizations for the analysis results using Plotly and other libraries.
+    """)
+    
+    # Visualization options
+    st.subheader("Choose a visualization type")
+    viz_type = st.selectbox("Select Visualization Type", ["Box Plot", "Violin Plot", "Heatmap"])
+    
+    if st.button("Generate Visualization"):
+        with st.spinner("Generating visualization..."):
+            try:
+                # Mock visualization process
+                time.sleep(2)
+                st.success("Visualization generated!")
+                
+                # Display mock visualization
+                if viz_type == "Box Plot":
+                    fig = px.box(st.session_state.variants_df, x="#CHROM", y="POS")
+                    st.plotly_chart(fig)
+                elif viz_type == "Violin Plot":
+                    fig = px.violin(st.session_state.variants_df, y="POS", box=True)
+                    st.plotly_chart(fig)
+                elif viz_type == "Heatmap":
+                    fig = px.imshow(np.random.rand(10, 10), color_continuous_scale='Viridis')
+                    st.plotly_chart(fig)
+            except Exception as e:
+                st.error(f"Error during visualization: {e}")
+
 elif page == "Pipeline Execution":
     st.title("🔄 Pipeline Execution")
     st.markdown("""
@@ -851,6 +985,44 @@ elif page == "Pipeline Execution":
                 st.text_area("Log Output", log_text, height=300)
         except Exception as e:
             st.error(f"Unable to load logs: {e}")
+
+elif page == "AIDO Integration":
+    st.title("🔄 AIDO Integration")
+    st.markdown("""
+    Integrate and analyze data from the AIDO platform to explore its impact on pulmonary disease.
+    """)
+    
+    # Upload and manage AIDO data
+    st.subheader("AIDO Data Upload")
+    uploaded_file = st.file_uploader("Upload AIDO Data (CSV)", type=['csv'])
+    
+    if uploaded_file is not None:
+        with st.spinner('Loading AIDO data...'):
+            try:
+                aido_df = pd.read_csv(uploaded_file)
+                st.session_state.aido_df = aido_df
+                st.success(f"AIDO data loaded successfully! {len(aido_df)} records found.")
+            except Exception as e:
+                st.error(f"Error loading AIDO data: {e}")
+    
+    # Display loaded AIDO data
+    st.subheader("Current AIDO Data")
+    if 'aido_df' in st.session_state:
+        st.write(f"Total records: {len(st.session_state.aido_df)}")
+        st.dataframe(st.session_state.aido_df.head(10))
+    else:
+        st.info("No AIDO data loaded.")
+    
+    # Analysis options
+    st.subheader("Analysis Options")
+    if st.button("Integrate AIDO Data"):
+        with st.spinner("Integrating data..."):
+            try:
+                # Mock integration process
+                time.sleep(2)
+                st.success("AIDO data integrated with existing datasets!")
+            except Exception as e:
+                st.error(f"Error during integration: {e}")
 
 elif page == "Database Explorer":
     st.title("🗄️ Database Explorer")

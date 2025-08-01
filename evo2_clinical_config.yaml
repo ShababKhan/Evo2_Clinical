@@ -1,0 +1,18 @@
+DATA_PATHS:
+  1000_genomes_vcf: ''
+  cteph_gwas_loci: ''
+  emt_genes_list: ''
+  encode_data: ''
+  endothelial_genes_list: ''
+  gwas_catalog: ''
+  hapmap_data: ''
+  lncrna_list: ''
+  mesothelioma_variants: ''
+  pah_known_variants: ''
+OUTPUT_DIRS:
+  databases: output/databases
+  intermediate_files: output/intermediate
+  logs: output/logs
+TOOL_PATHS:
+  aido_executable: ''
+  evo2_executable: ''
